@@ -4,6 +4,7 @@ from django.views.decorators.csrf import csrf_exempt
 from .models import PasoEnsamblaje
 import json
 
+# Variables de estado (usar sesiones para persistencia)
 paso_actual = 1
 error = False
 
@@ -13,10 +14,9 @@ def recibir_boton(request):
     if request.method == "POST":
         data = json.loads(request.body)
         boton_presionado = data.get("boton")
-        error = False  # Reiniciar error en cada solicitud
 
         if paso_actual > 4:
-            return JsonResponse({"paso_actual": 5, "error": False})  # Ensamblaje completado
+            return JsonResponse({"paso_actual": 5, "error": False})
 
         try:
             paso = PasoEnsamblaje.objects.get(orden=paso_actual)
@@ -24,9 +24,9 @@ def recibir_boton(request):
                 paso_actual += 1
                 error = False
             else:
-                error = True  # Botón incorrecto
+                error = True
         except PasoEnsamblaje.DoesNotExist:
-            error = True  # Paso no existe en la base de datos
+            error = True
 
         return JsonResponse({
             "paso_actual": paso_actual,
@@ -34,12 +34,9 @@ def recibir_boton(request):
         })
     return JsonResponse({"status": "error"})
 
+@csrf_exempt
+def obtener_estado(request):
+    return JsonResponse({"paso_actual": paso_actual, "error": error})
+
 def index(request): # Vista para la página de inicio
     return render(request, "ensamblaje/index.html")
-
-def obtener_estado(request):
-    global paso_actual, error
-    return JsonResponse({
-        "paso_actual": paso_actual,
-        "error": error
-    })

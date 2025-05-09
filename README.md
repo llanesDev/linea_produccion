@@ -24,17 +24,18 @@ python manage.py runserver IP_DE_TU_MAQUINA:8000
 #include <ArduinoJson.h>
 
 // Configuración WiFi y servidor
-const char* ssid = "Fam Cazares Valenzuela";
+const char* ssid = "Fam  Cazares Valenzuela";
 const char* password = "Gera4628";
-const char* serverURL = "http://T192.168.0.106:8000/api/boton/";
+const char* serverURL = "http://192.168.0.106:8000/api/boton/"; // Cambia esto por la URL de tu servidor Django (IP DE TU PC)
 
 // Configuración de pines
 const int leds[] = {23, 22, 21, 19};    // Pines de LEDs (GPIO 23, 22, 21, 19)
 const int botones[] = {18, 5, 17, 16};  // Pines de botones (GPIO 18, 5, 17, 16)
 
-// Variables de estado
+// Variables de estado y debounce
 int paso_actual = 1;
 bool error = false;
+unsigned long ultimaPulsacion = 0; // Control de debounce
 
 void setup() {
   Serial.begin(115200);
@@ -57,17 +58,17 @@ void loop() {
     reconectarWiFi();
   }
 
-  // Leer botones
   for (int i = 0; i < 4; i++) {
-    if (digitalRead(botones[i]) == LOW) { // Botón presionado (LOW por PULLUP)
-      enviarEventoBoton(i + 1);           // Enviar número de botón (1-4)
-      delay(300);                         // Anti-rebote
-
-      // Actualizar estado y LEDs después de presionar botón
+    if (digitalRead(botones[i]) == LOW && (millis() - ultimaPulsacion > 300)) { // Debounce de 300ms
+      ultimaPulsacion = millis();
+      enviarEventoBoton(i + 1);
       obtenerEstadoActual();
       actualizarLEDs();
     }
   }
+
+  // Reconexión WiFi si es necesario
+  if (WiFi.status() != WL_CONNECTED) reconectarWiFi();
 }
 
 // ========== FUNCIONES AUXILIARES ==========

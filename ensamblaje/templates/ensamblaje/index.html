@@ -5,39 +5,36 @@
 
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
-      document.addEventListener("DOMContentLoaded", function () {
-        const alerta = document.getElementById("alerta");
+      document.addEventListener("DOMContentLoaded", () => {
         const pantalla = document.getElementById("pantalla");
+        const alerta = document.getElementById("alerta");
         const mensajeFinal = document.getElementById("mensaje-final");
 
-        // Función para actualizar la UI basada en la respuesta del servidor
-        function actualizarUI(data) {
-          pantalla.innerText = `Paso ${data.paso_actual}`;
-          if (data.error) {
-            alerta.classList.remove("hidden");
-            setTimeout(() => alerta.classList.add("hidden"), 2000); // Oculta la alerta después de 2 segundos
-          } else {
-            alerta.classList.add("hidden");
-          }
-          if (data.paso_actual > 4) {
-            mensajeFinal.classList.remove("hidden");
-          }
+        // Función para actualizar la UI
+        function actualizarEstado() {
+          fetch("/api/estado/")
+            .then((response) => response.json())
+            .then((data) => {
+              pantalla.textContent = `Paso ${data.paso_actual}`;
+              alerta.classList.toggle("hidden", !data.error);
+              mensajeFinal.classList.toggle("hidden", data.paso_actual <= 4);
+            });
         }
 
-        // Escuchar eventos de botones (simulados para prueba, luego reemplazar con ESP32)
+        // Escuchar eventos del ESP32 (simulado con teclas 1-4)
         document.addEventListener("keypress", (e) => {
-          // Mapear teclas 1-4 a botones (solo para pruebas sin ESP32)
           const boton = parseInt(e.key);
           if (boton >= 1 && boton <= 4) {
             fetch("/api/boton/", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ boton: boton }),
-            })
-              .then((response) => response.json())
-              .then((data) => actualizarUI(data));
+            }).then(actualizarEstado);
           }
         });
+
+        // Actualizar estado inicial
+        actualizarEstado();
       });
     </script>
   </head>
