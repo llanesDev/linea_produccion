@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Línea de Producción</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        const alerta = document.getElementById("alerta");
+        const pantalla = document.getElementById("pantalla");
+        const mensajeFinal = document.getElementById("mensaje-final");
+
+        // Función para actualizar la UI basada en la respuesta del servidor
+        function actualizarUI(data) {
+          pantalla.innerText = `Paso ${data.paso_actual}`;
+          if (data.error) {
+            alerta.classList.remove("hidden");
+            setTimeout(() => alerta.classList.add("hidden"), 2000); // Oculta la alerta después de 2 segundos
+          } else {
+            alerta.classList.add("hidden");
+          }
+          if (data.paso_actual > 4) {
+            mensajeFinal.classList.remove("hidden");
+          }
+        }
+
+        // Escuchar eventos de botones (simulados para prueba, luego reemplazar con ESP32)
+        document.addEventListener("keypress", (e) => {
+          // Mapear teclas 1-4 a botones (solo para pruebas sin ESP32)
+          const boton = parseInt(e.key);
+          if (boton >= 1 && boton <= 4) {
+            fetch("/api/boton/", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ boton: boton }),
+            })
+              .then((response) => response.json())
+              .then((data) => actualizarUI(data));
+          }
+        });
+      });
+    </script>
+  </head>
+
+  <body class="p-4">
+    <div id="pantalla" class="text-2xl">Paso 1</div>
+    <div id="alerta" class="hidden bg-red-500 text-white p-2 mt-4">
+      ¡Pieza incorrecta!
+    </div>
+    <div id="mensaje-final" class="hidden bg-green-500 text-white p-2 mt-4">
+      Ensamblaje completado ✅
+    </div>
+  </body>
+</html>
